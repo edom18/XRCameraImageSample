@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/XRCameraImageSample/Scenes/CaptureTest.unity
+    path: Assets/XRCameraImageSample/Scenes/CaptureXRCameraTest.unity
     guid: 482ea9fdbab1dc94780a050eab96d176
   m_configObjects: {}
