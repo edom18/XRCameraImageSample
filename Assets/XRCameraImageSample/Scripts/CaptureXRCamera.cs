@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
-public class CameraCaptureTest : MonoBehaviour
+public class CaptureXRCamera : MonoBehaviour
 {
     [SerializeField] private ARCameraManager _cameraManager = null;
     [SerializeField] private GameObject _target = null;
