@@ -16,6 +16,8 @@ public class CaptureXRCamera : MonoBehaviour
     private Texture2D _texture = null;
     private Renderer _renderer = null;
     private Material _material = null;
+    private static readonly int UVMultiplierLandScape = Shader.PropertyToID("_UVMultiplierLandScape");
+    private static readonly int UVMultiplierPortrait = Shader.PropertyToID("_UVMultiplierPortrait");
 
     private void Start()
     {
@@ -63,8 +65,8 @@ public class CaptureXRCamera : MonoBehaviour
             
             if(_texture != null)
             {
-                _material.SetFloat("_UVMultiplierLandScape", CalculateUVMultiplierLandScape(_texture));
-                _material.SetFloat("_UVMultiplierPortrait", CalculateUVMultiplierPortrait(_texture));
+                _material.SetFloat(UVMultiplierLandScape, CalculateUVMultiplierLandScape(_texture));
+                _material.SetFloat(UVMultiplierPortrait, CalculateUVMultiplierPortrait(_texture));
             }
         }
 
