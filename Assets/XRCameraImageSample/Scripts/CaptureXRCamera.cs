@@ -12,8 +12,10 @@ public class CaptureXRCamera : MonoBehaviour
     [SerializeField] private ARCameraManager _cameraManager = null;
     [SerializeField] private GameObject _target = null;
     [SerializeField] private Texture2D _sampleTexture = null;
-
+    [SerializeField] private Material _transposeMaterial = null;
+    
     private Texture2D _texture = null;
+    private RenderTexture _previewTexture = null;
     private Renderer _renderer = null;
     private Material _material = null;
     private static readonly int UVMultiplierLandScape = Shader.PropertyToID("_UVMultiplierLandScape");
@@ -27,18 +29,17 @@ public class CaptureXRCamera : MonoBehaviour
         
         _material = _renderer.material;
         _material.mainTexture = _sampleTexture;
+        
+        _previewTexture = new RenderTexture(_sampleTexture.width, _sampleTexture.height, 0, RenderTextureFormat.BGRA32);
+        _previewTexture.Create();
     }
 
     private void Update()
     {
-        //if (Input.touchCount > 0)
-        //{
-        //    Touch touch = Input.GetTouch(0);
-        //    if (touch.phase == TouchPhase.Began)
-        //    {
-        //        Capture();
-        //    }
-        //}
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            PreviewTexture(_sampleTexture);
+        }
     }
 
     private void OnCameraFrameReceived(ARCameraFrameEventArgs eventArgs)
@@ -60,14 +61,23 @@ public class CaptureXRCamera : MonoBehaviour
             {
                 DestroyImmediate(_texture);
             }
+
+            if (_previewTexture != null)
+            {
+                _previewTexture.Release();
+            }
             
             _texture = new Texture2D(cameraImage.width, cameraImage.height, TextureFormat.RGBA32, false);
+            _previewTexture = new RenderTexture(_texture.width, _texture.height, 0, RenderTextureFormat.BGRA32);
+            _previewTexture.Create();
             
             if(_texture != null)
             {
                 _material.SetFloat(UVMultiplierLandScape, CalculateUVMultiplierLandScape(_texture));
                 _material.SetFloat(UVMultiplierPortrait, CalculateUVMultiplierPortrait(_texture));
             }
+            
+            ResizePreviewPlane();
         }
 
         CameraImageTransformation imageTransformation = (Input.deviceOrientation == DeviceOrientation.LandscapeRight) ?
@@ -90,7 +100,20 @@ public class CaptureXRCamera : MonoBehaviour
         }
 
         _texture.Apply();
-        _renderer.material.mainTexture = _texture;
+        PreviewTexture(_texture);
+    }
+
+    private void ResizePreviewPlane()
+    {
+        // float aspect = (float)_texture.height / (float)_texture.width;
+        float aspect = (float)_texture.width / (float)_texture.height;
+        _target.transform.localScale = new Vector3(1f, aspect, 1f);
+    }
+
+    private void PreviewTexture(Texture2D texture)
+    {
+        Graphics.Blit(texture, _previewTexture, _transposeMaterial);
+        _renderer.material.mainTexture = _previewTexture;
     }
 
     private float CalculateUVMultiplierLandScape(Texture2D cameraTexture)
