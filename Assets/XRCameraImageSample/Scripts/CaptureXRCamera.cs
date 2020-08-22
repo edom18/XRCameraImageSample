@@ -162,18 +162,4 @@ public class CaptureXRCamera : MonoBehaviour
 
         _renderer.material.mainTexture = _previewTexture;
     }
-
-    private float CalculateUVMultiplierLandScape(Texture2D cameraTexture)
-    {
-        float screenAspect = (float) Screen.width / (float) Screen.height;
-        float cameraTextureAspect = (float) cameraTexture.width / (float) cameraTexture.height;
-        return screenAspect / cameraTextureAspect;
-    }
-
-    private float CalculateUVMultiplierPortrait(Texture2D cameraTexture)
-    {
-        float screenAspect = (float) Screen.height / (float) Screen.width;
-        float cameraTextureAspect = (float) cameraTexture.width / (float) cameraTexture.height;
-        return screenAspect / cameraTextureAspect;
-    }
 }
