@@ -90,24 +90,7 @@ public class CaptureXRCamera : MonoBehaviour
             return;
         }
 
-        if (_texture == null || _texture.width != cameraImage.width || _texture.height != cameraImage.height)
-        {
-            if (_texture != null)
-            {
-                DestroyImmediate(_texture);
-            }
-
-            if (_previewTexture != null)
-            {
-                _previewTexture.Release();
-            }
-
-            _texture = new Texture2D(cameraImage.width, cameraImage.height, TextureFormat.RGBA32, false);
-            _previewTexture = new RenderTexture(_texture.width, _texture.height, 0, RenderTextureFormat.BGRA32);
-            _previewTexture.Create();
-
-            ResizePreviewPlane();
-        }
+        RecreateTextureIfNeeded(cameraImage);
 
         CameraImageTransformation imageTransformation = (Input.deviceOrientation == DeviceOrientation.LandscapeRight)
             ? CameraImageTransformation.MirrorY
@@ -131,6 +114,28 @@ public class CaptureXRCamera : MonoBehaviour
 
         _texture.Apply();
         PreviewTexture(_texture);
+    }
+
+    private void RecreateTextureIfNeeded(XRCameraImage cameraImage)
+    {
+        if (_texture == null || _texture.width != cameraImage.width || _texture.height != cameraImage.height)
+        {
+            if (_texture != null)
+            {
+                DestroyImmediate(_texture);
+            }
+
+            if (_previewTexture != null)
+            {
+                _previewTexture.Release();
+            }
+
+            _texture = new Texture2D(cameraImage.width, cameraImage.height, TextureFormat.RGBA32, false);
+            _previewTexture = new RenderTexture(_texture.width, _texture.height, 0, RenderTextureFormat.BGRA32);
+            _previewTexture.Create();
+
+            ResizePreviewPlane();
+        }
     }
 
     private void ResizePreviewPlane()
