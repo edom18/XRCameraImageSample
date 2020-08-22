@@ -13,25 +13,31 @@ public class CaptureXRCamera : MonoBehaviour
     [SerializeField] private GameObject _target = null;
     [SerializeField] private Texture2D _sampleTexture = null;
     [SerializeField] private Material _transposeMaterial = null;
-    
+
     private Texture2D _texture = null;
     private RenderTexture _previewTexture = null;
     private Renderer _renderer = null;
     private Material _material = null;
-    private static readonly int UVMultiplierLandScape = Shader.PropertyToID("_UVMultiplierLandScape");
-    private static readonly int UVMultiplierPortrait = Shader.PropertyToID("_UVMultiplierPortrait");
 
     private void Start()
     {
         Debug.Log(">>>>>>>>> START <<<<<<<<<<");
+
         _cameraManager.frameReceived += OnCameraFrameReceived;
         _renderer = _target.GetComponent<Renderer>();
-        
+
         _material = _renderer.material;
         _material.mainTexture = _sampleTexture;
-        
+
         _previewTexture = new RenderTexture(_sampleTexture.width, _sampleTexture.height, 0, RenderTextureFormat.BGRA32);
         _previewTexture.Create();
+
+        DeviceChange.Instance.OnResolutionChange += HandleOnOnResolutionChange;
+    }
+
+    private void HandleOnOnResolutionChange(Vector2 obj)
+    {
+        ResizePreviewPlane();
     }
 
     private void Update()
@@ -66,24 +72,19 @@ public class CaptureXRCamera : MonoBehaviour
             {
                 _previewTexture.Release();
             }
-            
+
             _texture = new Texture2D(cameraImage.width, cameraImage.height, TextureFormat.RGBA32, false);
             _previewTexture = new RenderTexture(_texture.width, _texture.height, 0, RenderTextureFormat.BGRA32);
             _previewTexture.Create();
-            
-            if(_texture != null)
-            {
-                _material.SetFloat(UVMultiplierLandScape, CalculateUVMultiplierLandScape(_texture));
-                _material.SetFloat(UVMultiplierPortrait, CalculateUVMultiplierPortrait(_texture));
-            }
-            
+
             ResizePreviewPlane();
         }
 
-        CameraImageTransformation imageTransformation = (Input.deviceOrientation == DeviceOrientation.LandscapeRight) ?
-                                    CameraImageTransformation.MirrorY :
-                                    CameraImageTransformation.MirrorX;
-        XRCameraImageConversionParams conversionParams = new XRCameraImageConversionParams(cameraImage, TextureFormat.RGBA32, imageTransformation);
+        CameraImageTransformation imageTransformation = (Input.deviceOrientation == DeviceOrientation.LandscapeRight)
+            ? CameraImageTransformation.MirrorY
+            : CameraImageTransformation.MirrorX;
+        XRCameraImageConversionParams conversionParams =
+            new XRCameraImageConversionParams(cameraImage, TextureFormat.RGBA32, imageTransformation);
 
         NativeArray<byte> rawTextureData = _texture.GetRawTextureData<byte>();
 
@@ -105,8 +106,17 @@ public class CaptureXRCamera : MonoBehaviour
 
     private void ResizePreviewPlane()
     {
-        // float aspect = (float)_texture.height / (float)_texture.width;
-        float aspect = (float)_texture.width / (float)_texture.height;
+        float aspect = 1f;
+        
+        if (Input.deviceOrientation == DeviceOrientation.Portrait)
+        {
+            aspect = (float)_texture.width / (float)_texture.height;
+        }
+        else
+        {
+            aspect = (float)_texture.height / (float)_texture.width;
+        }
+
         _target.transform.localScale = new Vector3(1f, aspect, 1f);
     }
 
@@ -114,20 +124,6 @@ public class CaptureXRCamera : MonoBehaviour
     {
         Graphics.Blit(texture, _previewTexture, _transposeMaterial);
         _renderer.material.mainTexture = _previewTexture;
-    }
-
-    private float CalculateUVMultiplierLandScape(Texture2D cameraTexture)
-    {
-        float screenAspect = (float) Screen.width / (float) Screen.height;
-        float cameraTextureAspect = (float) cameraTexture.width / (float) cameraTexture.height;
-        return screenAspect / cameraTextureAspect;
-    }
-    
-    private float CalculateUVMultiplierPortrait(Texture2D cameraTexture)
-    {
-        float screenAspect = (float) Screen.height / (float) Screen.width;
-        float cameraTextureAspect = (float) cameraTexture.width / (float) cameraTexture.height;
-        return screenAspect / cameraTextureAspect;
     }
 
     // This function refere the Unity document.
@@ -178,4 +174,3 @@ public class CaptureXRCamera : MonoBehaviour
     //    buffer.Dispose();
     //}
 }
-
