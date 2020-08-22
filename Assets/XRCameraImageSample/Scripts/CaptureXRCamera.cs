@@ -36,13 +36,15 @@ public class CaptureXRCamera : MonoBehaviour
         _previewTexture = new RenderTexture(_sampleTexture.width, _sampleTexture.height, 0, RenderTextureFormat.BGRA32);
         _previewTexture.Create();
 
-        DeviceChange.Instance.OnResolutionChange += HandleOnOnResolutionChange;
+        DeviceChange.Instance.OnOrientationChange += HandleOnOnOrientationChange;
+
         DisplayInfo();
     }
 
-    private void HandleOnOnResolutionChange(Vector2 obj)
+    private void HandleOnOnOrientationChange(DeviceOrientation orientation)
     {
         ResizePreviewPlane();
+        CheckRotation();
         DisplayInfo();
     }
 
@@ -67,6 +69,11 @@ public class CaptureXRCamera : MonoBehaviour
     {
         RefreshCameraFeedTexture();
         DisplayInfo();
+    }
+
+    private void CheckRotation()
+    {
+        _needsRotate = Input.deviceOrientation == DeviceOrientation.Portrait;
     }
 
     private void DisplayInfo()
@@ -129,7 +136,7 @@ public class CaptureXRCamera : MonoBehaviour
     private void ResizePreviewPlane()
     {
         float aspect = 1f;
-        
+
         if (Input.deviceOrientation == DeviceOrientation.Portrait)
         {
             aspect = (float)_texture.width / (float)_texture.height;
