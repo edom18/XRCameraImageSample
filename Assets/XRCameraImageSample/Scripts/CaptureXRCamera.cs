@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 
@@ -13,11 +14,14 @@ public class CaptureXRCamera : MonoBehaviour
     [SerializeField] private GameObject _target = null;
     [SerializeField] private Texture2D _sampleTexture = null;
     [SerializeField] private Material _transposeMaterial = null;
+    [SerializeField] private Text _text = null;
 
     private Texture2D _texture = null;
     private RenderTexture _previewTexture = null;
     private Renderer _renderer = null;
     private Material _material = null;
+
+    private bool _needsRotate = true;
 
     private void Start()
     {
@@ -33,11 +37,13 @@ public class CaptureXRCamera : MonoBehaviour
         _previewTexture.Create();
 
         DeviceChange.Instance.OnResolutionChange += HandleOnOnResolutionChange;
+        DisplayInfo();
     }
 
     private void HandleOnOnResolutionChange(Vector2 obj)
     {
         ResizePreviewPlane();
+        DisplayInfo();
     }
 
     private void Update()
@@ -46,11 +52,27 @@ public class CaptureXRCamera : MonoBehaviour
         {
             PreviewTexture(_sampleTexture);
         }
+
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Began)
+            {
+                _needsRotate = !_needsRotate;
+            }
+        }
     }
 
     private void OnCameraFrameReceived(ARCameraFrameEventArgs eventArgs)
     {
         RefreshCameraFeedTexture();
+        DisplayInfo();
+    }
+
+    private void DisplayInfo()
+    {
+        _text.text =
+            $"Needs rotate : {_needsRotate.ToString()}\nScreen :  w - {Screen.width.ToString()}, h - {Screen.height.ToString()}\nTexture: w - {_previewTexture.width.ToString()}, h - {_previewTexture.height.ToString()}";
     }
 
     private void RefreshCameraFeedTexture()
@@ -122,55 +144,29 @@ public class CaptureXRCamera : MonoBehaviour
 
     private void PreviewTexture(Texture2D texture)
     {
-        Graphics.Blit(texture, _previewTexture, _transposeMaterial);
+        if (_needsRotate)
+        {
+            Graphics.Blit(texture, _previewTexture, _transposeMaterial);
+        }
+        else
+        {
+            Graphics.Blit(texture, _previewTexture);
+        }
+
         _renderer.material.mainTexture = _previewTexture;
     }
 
-    // This function refere the Unity document.
-    // https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@4.0/manual/cpu-camera-image.html
-    //unsafe private void OnCameraFrameReceived(ARCameraFrameEventArgs eventArgs)
-    //{
-    //    Debug.Log("-- OnCameraFrameReceived --");
+    private float CalculateUVMultiplierLandScape(Texture2D cameraTexture)
+    {
+        float screenAspect = (float) Screen.width / (float) Screen.height;
+        float cameraTextureAspect = (float) cameraTexture.width / (float) cameraTexture.height;
+        return screenAspect / cameraTextureAspect;
+    }
 
-    //    XRCameraImage image;
-    //    XRCameraSubsystem cameraSubsystem = _cameraManager.subsystem;
-
-    //    if (cameraSubsystem == null)
-    //    {
-    //        return;
-    //    }
-
-    //    if (!cameraSubsystem.TryGetLatestImage(out image))
-    //    {
-    //        return;
-    //    }
-
-    //    Debug.Log("Will convert the image.");
-
-    //    var conversionParams = new XRCameraImageConversionParams
-    //    {
-    //        // Get the entire image.
-    //        inputRect = new RectInt(0, 0, image.width, image.height),
-    //        outputDimensions = new Vector2Int(image.width / 2, image.height / 2),
-    //        outputFormat = TextureFormat.RGBA32,
-    //        transformation = CameraImageTransformation.MirrorY,
-    //    };
-
-    //    int size = image.GetConvertedDataSize(conversionParams);
-    //    var buffer = new NativeArray<byte>(size, Allocator.Temp);
-    //    image.Convert(conversionParams, new IntPtr(buffer.GetUnsafePtr()), buffer.Length);
-    //    image.Dispose();
-
-    //    if (_texture != null)
-    //    {
-    //        DestroyImmediate(_texture);
-    //    }
-
-    //    _texture = new Texture2D(conversionParams.outputDimensions.x, conversionParams.outputDimensions.y, conversionParams.outputFormat, false);
-    //    _texture.LoadRawTextureData(buffer);
-    //    _texture.Apply();
-    //    _renderer.material.mainTexture = _texture;
-
-    //    buffer.Dispose();
-    //}
+    private float CalculateUVMultiplierPortrait(Texture2D cameraTexture)
+    {
+        float screenAspect = (float) Screen.height / (float) Screen.width;
+        float cameraTextureAspect = (float) cameraTexture.width / (float) cameraTexture.height;
+        return screenAspect / cameraTextureAspect;
+    }
 }
