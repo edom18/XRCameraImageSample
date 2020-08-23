@@ -14,4 +14,4 @@ This project is just a sample for using a raw data of XRCameraImage, which is pr
 
 サンプルについてはブログで解説しているので興味がある方はご覧ください。
 
-- [[XRCameraSubSystemから直接カメラの映像を取得する](https://edom18.hateblo.jp/entry/2020/08/23/121008)](https://edom18.hateblo.jp/entry/2020/08/23/121008)
+- [XRCameraSubSystemから直接カメラの映像を取得する](https://edom18.hateblo.jp/entry/2020/08/23/121008)
